@@ -8,7 +8,7 @@ It includes:
 - 🚀 Hands-on guides with real-world use cases  
 
 The purpose of this repo is to serve as both:
-- A **learning resource** for students & professionals  
+- A **learning resource** for everyone 
 - A **portfolio of knowledge** demonstrating practical understanding of Cloud & DevOps  
 
 ---
