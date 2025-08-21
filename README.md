@@ -21,3 +21,7 @@ The purpose of this repo is to serve as both:
 - Infrastructure as Code (Terraform, CloudFormation)
 
 Stay tuned as this knowledge base grows ✨
+
+<!--UPDATE-START-->
+Last updated: (auto)
+<!--UPDATE-END-->
