@@ -1,0 +1,38 @@
+name: README Auto Refresh
+
+on:
+  schedule:
+    - cron: "0 11 * * *"   # daily at 11:00 UTC (07:00 Toronto in summer)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update timestamp in README
+        run: |
+          TS="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          awk -v ts="$TS" '
+            BEGIN{start="<!--UPDATE-START-->", end="<!--UPDATE-END-->"}
+            {
+              if($0 ~ start){print; print "Last updated: " ts; skip=1; next}
+              if(skip && $0 ~ end){skip=0}
+              if(!skip) print
+            }' README.md > README.tmp && mv README.tmp README.md
+
+      - name: Commit changes (if any)
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add README.md
+            git commit -m "chore: refresh README timestamp"
+            git push
+          else
+            echo "No changes."
+          fi
