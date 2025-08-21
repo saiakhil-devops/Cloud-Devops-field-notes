@@ -1,0 +1,25 @@
+site_name: Cloud & DevOps Field Notes
+site_description: Practitioner handbook by Sai Akhil Perumalla
+repo_url: https://github.com/saiakhil-devops/Cloud-Devops-field-notes
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.indexes
+    - content.code.copy
+    - search.suggest
+
+plugins:
+  - search
+  - mermaid2
+
+nav:
+  - Home: index.md
+  - DevOps:
+      - CI/CD Practical Guide: devops/ci-cd.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
