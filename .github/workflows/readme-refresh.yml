@@ -6,41 +6,41 @@ on:
   workflow_dispatch:        # allow manual runs
 
 permissions:
-  contents: write           # required so scheduled runs can push
+  contents: write
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Update README timestamp
+      - name: Update timestamp in README
         shell: bash
         run: |
           set -euo pipefail
-          stamp="<!--last_refresh--> Last refreshed: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          TS="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
-          if grep -q "<!--last_refresh-->" README.md; then
-            sed -i "s|<!--last_refresh-->.*|$stamp|g" README.md
-          else
-            printf "\n---\n%s\n" "$stamp" >> README.md
-          fi
+          awk -v ts="$TS" '
+            BEGIN { start="<!--UPDATE-START-->"; end="<!--UPDATE-END-->"; inside=0 }
+            $0 ~ start { print; print "Last updated: " ts; inside=1; next }
+            $0 ~ end   { print; inside=0; next }
+            !inside    { print }
+          ' README.md > README.tmp
+
+          mv README.tmp README.md
 
       - name: Commit and push if changed
         shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           if ! git diff --quiet; then
             git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add README.md
-            git commit -m "chore: auto-refresh README [skip ci]"
+            git commit -m "chore: auto-refresh README timestamp [skip ci]"
             git push
           else
             echo "No changes to commit."
