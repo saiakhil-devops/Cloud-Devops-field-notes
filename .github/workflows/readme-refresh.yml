@@ -2,37 +2,46 @@ name: README Auto Refresh
 
 on:
   schedule:
-    - cron: "0 11 * * *"   # daily at 11:00 UTC (07:00 Toronto in summer)
-  workflow_dispatch:
+    - cron: "0 */6 * * *"   # every 6 hours (UTC)
+  workflow_dispatch:        # allow manual runs
 
 permissions:
-  contents: write
+  contents: write           # required so scheduled runs can push
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Update timestamp in README
+      - name: Update README timestamp
+        shell: bash
         run: |
-          TS="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          awk -v ts="$TS" '
-            BEGIN{start="<!--UPDATE-START-->", end="<!--UPDATE-END-->"}
-            {
-              if($0 ~ start){print; print "Last updated: " ts; skip=1; next}
-              if(skip && $0 ~ end){skip=0}
-              if(!skip) print
-            }' README.md > README.tmp && mv README.tmp README.md
+          set -euo pipefail
+          stamp="<!--last_refresh--> Last refreshed: $(date -u '+%Y-%m-%d %H:%M UTC')"
 
-      - name: Commit changes (if any)
+          if grep -q "<!--last_refresh-->" README.md; then
+            sed -i "s|<!--last_refresh-->.*|$stamp|g" README.md
+          else
+            printf "\n---\n%s\n" "$stamp" >> README.md
+          fi
+
+      - name: Commit and push if changed
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [[ -n "$(git status --porcelain)" ]]; then
-            git config user.name "github-actions[bot]"
+          set -euo pipefail
+          if ! git diff --quiet; then
+            git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add README.md
-            git commit -m "chore: refresh README timestamp"
+            git commit -m "chore: auto-refresh README [skip ci]"
             git push
           else
-            echo "No changes."
+            echo "No changes to commit."
           fi
